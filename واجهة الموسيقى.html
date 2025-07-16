@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مشغل موسيقى</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(270deg, #0f2027, #203a43, #2c5364, #4a90e2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    #mainWidget {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #00ffe7;
+      border-radius: 40px;
+      backdrop-filter: blur(25px);
+      box-shadow: 0 0 50px #00ffe7;
+      padding: 20px;
+      width: 350px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .widget {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 30px;
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      box-shadow: 0 0 10px black;
+    }
+
+    #widget1 {
+      width: 100%;
+      height: 126px;
+      margin-bottom: 20px;
+    }
+
+    #widget2 {
+      width: 100%;
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      transition: height 0.8s ease;
+    }
+
+    #widget2.expanded {
+      height: 400px;
+    }
+
+    .inner-widget {
+      width: 290px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      margin-top: 10px;
+      box-shadow: 0 0 10px black;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+      position: absolute;
+      top: 0;
+      transition: top 0.8s ease;
+      z-index: 10;
+    }
+
+    .inner-widget.slide-down {
+      top: 330px;
+    }
+
+    .ok-box {
+      width: 40px;
+      height: 30px;
+      background-color: #00ffe7;
+      border-radius: 7px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      color: #000;
+      box-shadow: 0 0 5px black;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.8s ease;
+      user-select: none;
+    }
+
+    .ok-box:hover {
+      transform: scale(1.1);
+    }
+
+    #widget3 {
+      width: 100%;
+      max-width: 290px;
+      height: 210px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      box-shadow: 0 0 10px black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 70px;
+      opacity: 1;
+      transition: opacity 0.8s ease;
+    }
+
+    #widget3.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .small-box {
+      width: 100px;
+      height: 100px;
+      background: transparent;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      margin-right: 10px;
+      box-shadow: 0 0 5px black;
+    }
+
+    .text-box {
+      color: white;
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .controls-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-grow: 1;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .controls button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .controls button:hover {
+      transform: translateY(-2px) scale(1.4);
+    }
+
+    .controls svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    .bart-greeting {
+      position: absolute;
+      top: 160px;
+      text-align: center;
+      font-size: 16px;
+      color: white;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      z-index: 5;
+    }
+
+    .bart-greeting.visible {
+      opacity: 1;
+    }
+
+    .bart-greeting.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .chat-container {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      width: 100%;
+      max-height: 360px;
+      overflow-y: auto;
+      padding: 10px;
+      scroll-behavior: smooth;
+      transition: max-height 0.8s ease;
+    }
+
+    .hidden-chat {
+      display: none;
+    }
+
+    .chat-message {
+      display: inline-block;
+      max-width: 80%;
+      padding: 10px 15px;
+      border-radius: 20px;
+      margin: 5px 0;
+      color: white;
+      font-size: 15px;
+      animation: fadeIn 0.5s ease-in-out;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .user-message.ar {
+      background: linear-gradient(to top, #00cfff, #0066ff);
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .user-message.ltr {
+      background: linear-gradient(to top, #00cfff, #0066ff);
+      align-self: flex-end;
+      text-align: left;
+    }
+
+    .ai-message {
+      background: linear-gradient(to top, #ffc400, #ff6f00);
+      align-self: flex-start;
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #chatContainer::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    #chatContainer::-webkit-scrollbar-track {
+      background: rgba(58, 85, 84, 0.678);
+      border-radius: 20px;
+    }
+
+    #chatContainer::-webkit-scrollbar-thumb {
+      background: #00ffe7;
+      border-radius: 20px;
+      box-shadow: 0 0 10px #00ffe7;
+      transition: background 0.3s ease;
+    }
+
+    #chatContainer::-webkit-scrollbar-thumb:hover {
+      background: #00e0ff;
+    }
+
+    .chat-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      z-index: 30;
+      display: none;
+      transition: transform 0.3s ease;
+    }
+
+    .chat-icon:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainWidget">
+    <div class="widget" id="widget1">
+      <div class="small-box" id="smallBox1"></div>
+      <div class="controls-container">
+        <div class="text-box" id="songTitle1">No song</div>
+        <div class="controls">
+          <button onclick="prevSong()">⏮</button>
+          <button id="playPauseBtn1" onclick="togglePlay()">
+            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+          <button onclick="nextSong()">⏭</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="widget" id="widget2">
+      <div class="chat-icon" id="newChatIcon" title="دردشة جديدة">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <rect x="2" y="2" width="20" height="20" rx="3" ry="3" fill="rgba(255, 255, 255, 0.05)" stroke="#00ffe7"
+            stroke-width="1" />
+          <g transform="translate(2, -2)">
+            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L8 19l-4 1 1-4 11.5-12.5z" fill="rgba(255, 255, 255, 0.05)"
+              stroke="#00ffe7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+        </svg>
+      </div>
+
+      <div class="inner-widget" id="innerWidget">
+        <input id="searchInput" type="text" placeholder="ابحث عن أغنية..."
+          style="flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 16px;" />
+        <div class="ok-box" id="okButton">OK</div>
+      </div>
+
+      <div class="bart-greeting" id="bartGreeting"></div>
+      <div class="chat-container hidden-chat" id="chatContainer"></div>
+
+      <div class="widget" id="widget3">
+        <div class="text-box" id="responseText">الاغاني المفضلة</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isPlaying = false;
+    let currentAudio = null;
+    let pressTimer;
+    let chatMode = false;
+    let isChatReady = false;
+    let isSearchReady = true;
+    let hasOpenedBefore = false;
+
+    const getGreetingMessage = () => {
+      const hour = new Date().getHours();
+      if (hour >= 7 && hour < 12) return "صباح الخير، يبدو أنه يوم جميل ";
+      if (hour >= 12 && hour < 15) return "حان وقت الموسيقى الآن ";
+      if (hour >= 15 && hour < 21) return "مساء الخير، هل تريد أغنية حماسية؟ ";
+      return "هل تود موسيقى هادئة لليلة اليوم؟ ";
+    };
+
+    const togglePlay = () => {
+      if (currentAudio) {
+        isPlaying ? currentAudio.pause() : currentAudio.play();
+        isPlaying = !isPlaying;
+        updatePlayPauseIcon();
+      }
+    };
+
+    const updatePlayPauseIcon = () => {
+      const btn = document.getElementById("playPauseBtn1");
+      btn.innerHTML = isPlaying
+        ? '<svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+        : '<svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    };
+
+    const prevSong = () => { };
+    const nextSong = () => { };
+
+    const okBtn = document.getElementById("okButton");
+    const widget3 = document.getElementById("widget3");
+    const widget2 = document.getElementById("widget2");
+    const innerWidget = document.getElementById("innerWidget");
+    const chatContainer = document.getElementById("chatContainer");
+    const bartGreeting = document.getElementById("bartGreeting");
+    const input = document.getElementById("searchInput");
+    const newChatIcon = document.getElementById("newChatIcon");
+
+    okBtn.addEventListener("mousedown", () => {
+      pressTimer = setTimeout(() => {
+        chatMode = !chatMode;
+        widget3.classList.toggle("hidden", chatMode);
+        innerWidget.classList.toggle("slide-down", chatMode);
+        widget2.classList.toggle("expanded", chatMode);
+        okBtn.textContent = chatMode ? "↑" : "OK";
+        newChatIcon.style.display = chatMode ? "block" : "none";
+        bartGreeting.textContent = hasOpenedBefore
+          ? getGreetingMessage()
+          : "!مرحبا، انا مساعدك الذكي سررت برؤيتك";
+        hasOpenedBefore = true;
+        bartGreeting.classList.toggle("visible", chatMode);
+        chatContainer.classList.toggle("hidden-chat", !chatMode);
+        isChatReady = chatMode;
+        isSearchReady = !chatMode;
+      }, 800);
+    });
+
+    ["mouseup", "mouseleave"].forEach(evt => okBtn.addEventListener(evt, () => clearTimeout(pressTimer)));
+
+    okBtn.addEventListener("click", () => {
+      if (chatMode && isChatReady) {
+        const msg = input.value.trim();
+        if (msg) {
+          addUserMessage(msg);
+          input.value = "";
+        }
+      }
+    });
+
+    const isArabic = text => /[\u0600-\u06FF]/.test(text);
+
+    const addUserMessage = text => {
+      const msg = document.createElement('div');
+      const directionClass = isArabic(text) ? 'ar' : 'ltr';
+      msg.className = `chat-message user-message ${directionClass}`;
+      msg.textContent = text;
+      chatContainer.appendChild(msg);
+      scrollToBottom();
+      checkGreetingVisibility();
+    };
+
+    const addAIMessage = text => {
+      const msg = document.createElement('div');
+      msg.className = 'chat-message ai-message';
+      msg.textContent = '';
+      chatContainer.appendChild(msg);
+      let i = 0;
+      const typeWriter = () => {
+        if (i < text.length) {
+          msg.textContent += text[i++];
+          setTimeout(typeWriter, 25);
+        }
+      };
+      typeWriter();
+      scrollToBottom();
+      checkGreetingVisibility();
+    };
+
+    const scrollToBottom = () => chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    const checkGreetingVisibility = () => {
+      const containerRect = chatContainer.getBoundingClientRect();
+      const messages = chatContainer.querySelectorAll('.chat-message');
+      if (!messages.length) return bartGreeting.classList.remove('fade-out');
+      const last = messages[messages.length - 1].getBoundingClientRect();
+      const mid = containerRect.top + containerRect.height / 2;
+      bartGreeting.classList.toggle('fade-out', last.bottom >= mid);
+    };
+
+    newChatIcon.addEventListener("click", () => {
+      chatContainer.innerHTML = "";
+      bartGreeting.textContent = getGreetingMessage();
+      bartGreeting.classList.remove("fade-out");
+    });
+  </script>
+</body>
+
+</html>
